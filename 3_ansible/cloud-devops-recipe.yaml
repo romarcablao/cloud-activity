@@ -1,0 +1,74 @@
+---
+- name: Web Servers
+  hosts: webservers
+  become: true
+  tasks:
+  - name: Install Remi Repository
+    yum:
+      name: https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+      state: present
+  - name: Install PHP
+    yum:
+      enablerepo: "remi,remi-php80" 
+      name:
+        - php
+        - php-common
+        - php-cli
+        - php-gd
+        - php-curl 
+        - php-mysqlnd
+        - php-fpm
+        - php-mysqli
+      state: present
+  - name: Download Composer
+    get_url:
+      url: https://getcomposer.org/installer
+      dest: /tmp/installer
+  - name: Install and Configure Composer
+    shell: |
+      cat /tmp/installer | php -- --install-dir=/usr/local/bin
+      mv /usr/local/bin/composer.phar /usr/local/bin/composer
+      chmod +x /usr/local/bin/composer
+  - name: Copy the Source Code
+    copy:
+      src: ./app
+      dest: /app
+  - name: Serve the application via php artisan
+    shell: |
+      cd /app
+      php artisan serve --host=0.0.0.0 --port=8080
+
+- name: DB Servers
+  hosts: databases
+  become: true
+  tasks:
+  - name: Setup Yum Repository for MySQL
+    yum:
+      name: https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+      state: present
+  - name: Install MySQL Server
+    yum:
+      enablerepo: mysql80-community
+      name: mysql-community-server
+      state: present
+  - name: Start MySQL
+    service:
+      name: mysql
+      state: started
+
+- name: Proxy Servers
+  hosts: webproxy
+  become: true
+  tasks:
+  - name: Install Nginx
+    yum:
+      name: nginx
+      state: present
+  - name: Copy Custom Config
+    copy:
+      src: ./nginx/conf.d
+      dest: /usr/share/nginx/conf.d
+  - name: Start Service
+    service:
+      name: nginx
+      state: started

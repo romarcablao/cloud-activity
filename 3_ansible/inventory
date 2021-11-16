@@ -1,0 +1,15 @@
+[webservers]
+server01 ansible_host=<IP>
+server02 ansible_host=<IP>
+server03 ansible_host=<IP>
+
+[databases]
+db01 ansible_host=<IP>
+
+[webproxy]
+proxy01 ansible_host=<IP>
+
+[all:vars]
+remote_user                  = <Set User>
+ansible_ssh_private_key_file = <Set PrivateKey Path>
+ansible_python_interpreter   = <Set Default Python Path>
